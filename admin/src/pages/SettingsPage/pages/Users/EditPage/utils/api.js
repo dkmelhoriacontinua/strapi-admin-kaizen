@@ -34,6 +34,28 @@ const postUserPermission = async (body) => {
   return data;
 }
 
+const fetchUserEnterprise = async (id) => {
+  const { data } = await axiosInstance.get('/content-manager/collection-types/api::usuario-empresa.usuario-empresa?sort=id:ASC&pageSize=1&filters[$and][0][id_usuario][$eq]=' + id);
+
+  return data?.results;
+}
+
+const postUserEnterprise = async (body) => {
+  const userEnterprise = await fetchUserEnterprise(body?.id_usuario);
+
+  let data = null;
+  if (!userEnterprise?.length) {
+    data = await axiosInstance.post('/content-manager/collection-types/api::usuario-empresa.usuario-empresa', body);
+  } else {
+    data = await axiosInstance.put(
+      '/content-manager/collection-types/api::usuario-empresa.usuario-empresa/' + userEnterprise[0]?.id,
+      body
+    );
+  }
+
+  return data;
+}
+
 const fetchFactories = async () => {
   const { data } = await axiosInstance.get('/content-manager/collection-types/api::usina.usina?page=1&pageSize=1000&sort=Nome:ASC');
   return data.results;
@@ -45,4 +67,13 @@ const fetchFronts = async () => {
 }
 
 
-export { fetchUser, putUser, fetchPermissions, postUserPermission, fetchUserPermission, fetchFactories, fetchFronts };
+export {
+  fetchUser,
+  putUser,
+  fetchPermissions,
+  postUserPermission,
+  fetchUserPermission,
+  fetchFactories,
+  fetchFronts,
+  postUserEnterprise
+};

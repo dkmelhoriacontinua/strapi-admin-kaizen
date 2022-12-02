@@ -313,7 +313,7 @@ const PopoverNotifications = ({ onDismiss = () => {}}) => {
 
     try {
       toggleLoading();
-      const response = await backInstance.patch(`/notifications/${notificationId}/close?userId=${id}`);
+      const response = await backInstance.patch(`/notifications/${notificationId}/close`, { user_id: id });
       if (response.status == 200) {
         setContent(prev => {
           const data = prev.data.filter(({ notification_id }) => notification_id !== notificationId);

@@ -16,7 +16,9 @@ import {
   useQueryParams,
   useNotification,
   useRBACProvider,
-  useTracking, request } from '@strapi/helper-plugin';
+  useTracking,
+  request
+} from '@strapi/helper-plugin';
 import { IconButton } from '@strapi/design-system/IconButton';
 import { Main } from '@strapi/design-system/Main';
 import { Box } from '@strapi/design-system/Box';

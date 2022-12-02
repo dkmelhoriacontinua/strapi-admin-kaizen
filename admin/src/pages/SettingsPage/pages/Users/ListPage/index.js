@@ -33,7 +33,7 @@ const ContainerLoader = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100vh
+  height: 100vh;
 `
 
 const ListPage = () => {
@@ -154,8 +154,8 @@ const ListPage = () => {
 
   let newData = [];
 
-  if (data?.results.length && allPermissions?.data?.length && userPermissions?.data?.length && (idPermissionMaster)) {
-    newData = data?.results.filter(item => {
+  if (data?.length && allPermissions?.data?.length && userPermissions?.data?.length && (idPermissionMaster)) {
+    newData = data?.filter(item => {
       const filterPermissionUsers = userPermissions?.data?.find(itemP => itemP.id_usuario === item.id)
       if (!filterPermissionUsers) return item
       if(!isMaster && (filterPermissionUsers.id_permissao === idPermissionMaster.id)) return null

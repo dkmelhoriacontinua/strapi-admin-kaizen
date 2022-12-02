@@ -16,7 +16,14 @@ import { Typography } from '@strapi/design-system/Typography';
 import { Checkbox } from '@strapi/design-system/Checkbox';
 import styled from 'styled-components';
 import { Formik } from 'formik';
-import { Form, GenericInput, useNotification, useOverlayBlocker, LoadingIndicatorPage, translatedErrors } from '@strapi/helper-plugin';
+import {
+  Form,
+  GenericInput,
+  useNotification,
+  useOverlayBlocker,
+  LoadingIndicatorPage,
+  translatedErrors
+} from '@strapi/helper-plugin';
 import { useQueryClient, useMutation } from 'react-query';
 import formDataModel from 'ee_else_ce/pages/SettingsPage/pages/Users/ListPage/ModalForm/utils/formDataModel';
 import roleSettingsForm from 'ee_else_ce/pages/SettingsPage/pages/Users/ListPage/ModalForm/utils/roleSettingsForm';
@@ -26,7 +33,17 @@ import layout from './utils/layout';
 import stepper from './utils/stepper';
 import * as yup from 'yup';
 
-import { fetchPermissions, postUserPermission, fetchFactories, fetchFronts, fetchUserPermission} from '../../EditPage/utils/api';
+import { storage } from '../../../../../../utils';
+
+
+import {
+  fetchPermissions,
+  postUserPermission,
+  fetchFactories,
+  fetchFronts,
+  fetchUserPermission,
+  postUserEnterprise
+} from '../../EditPage/utils/api';
 import { useQuery } from 'react-query';
 import { Select, Option } from '@strapi/design-system/Select';
 import omit from 'lodash/omit';
@@ -70,7 +87,21 @@ const ModalForm = ({ queryName, onToggle }) => {
       const frentes = JSON.stringify(frontsSelecteds);
       const usinas = JSON.stringify(factoriesSelected);
 
-      await postUserPermission({ id_usuario: data.data.id, id_permissao: permission, frentes, usinas });
+      const enterprise = storage.getItem('enterprise');
+      const enterpriseId = enterprise?.externalId;
+  
+      if (!enterpriseId) throw new Error("Empresa não identificada.");
+
+      await postUserPermission({
+        id_usuario: data.data.id,
+        id_permissao: permission,
+        frentes, usinas
+      });
+
+      await postUserEnterprise({
+        id_usuario: data.data.id,
+        id_empresa_sis_login: enterpriseId
+      });
 
       await queryClient.invalidateQueries(queryName);
       goNext();
