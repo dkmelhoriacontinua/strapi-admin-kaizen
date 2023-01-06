@@ -1,34 +1,35 @@
 import React, { memo, useCallback, useMemo, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import get from 'lodash/get';
-import { CheckPermissions, useTracking, request } from '@strapi/helper-plugin';
 import { useIntl } from 'react-intl';
-import { Box } from '@strapi/design-system/Box';
-import { Divider } from '@strapi/design-system/Divider';
-import { Grid, GridItem } from '@strapi/design-system/Grid';
-import { LinkButton } from '@strapi/design-system/LinkButton';
-import { Main } from '@strapi/design-system/Main';
-import { Stack } from '@strapi/design-system/Stack';
-import { Typography } from '@strapi/design-system/Typography';
 import Layer from '@strapi/icons/Layer';
 import Pencil from '@strapi/icons/Pencil';
-import { InjectionZone } from '../../../shared/components';
-import permissions from '../../../permissions';
-// import Container from '../../components/Container';
-import DynamicZone from '../../components/DynamicZone';
-// import FormWrapper from '../../components/FormWrapper';
-import FieldComponent from '../../components/FieldComponent';
+import { Box } from '@strapi/design-system/Box';
+import { Main } from '@strapi/design-system/Main';
+import { Stack } from '@strapi/design-system/Stack';
+import { Divider } from '@strapi/design-system/Divider';
+import { Grid, GridItem } from '@strapi/design-system/Grid';
+import { Typography } from '@strapi/design-system/Typography';
+import { LinkButton } from '@strapi/design-system/LinkButton';
+import { CheckPermissions, useTracking, request } from '@strapi/helper-plugin';
+import get from 'lodash/get';
+
+import Header from './Header';
+import DeleteLink from './DeleteLink';
 import Inputs from '../../components/Inputs';
+import permissions from '../../../permissions';
+import DynamicZone from '../../components/DynamicZone';
+import DraftAndPublishBadge from './DraftAndPublishBadge';
 import SelectWrapper from '../../components/SelectWrapper';
+import { InjectionZone } from '../../../shared/components';
+import FieldComponent from '../../components/FieldComponent';
+import SingleTypeFormWrapper from '../../components/SingleTypeFormWrapper';
 import CollectionTypeFormWrapper from '../../components/CollectionTypeFormWrapper';
 import EditViewDataManagerProvider from '../../components/EditViewDataManagerProvider';
-import SingleTypeFormWrapper from '../../components/SingleTypeFormWrapper';
+
 import { getTrad } from '../../utils';
-import DraftAndPublishBadge from './DraftAndPublishBadge';
 import Informations from './Informations';
-import Header from './Header';
+import storage from '../../../utils/storage';
 import { createAttributesLayout, getFieldsActionMatchingPermissions } from './utils';
-import DeleteLink from './DeleteLink';
 
 const cmPermissions = permissions.contentManager;
 const ctbPermissions = [{ action: 'plugin::content-type-builder.read', subject: null }];
@@ -99,7 +100,7 @@ const EditView = ({
   useEffect(() => {
     const getData = async () => {
 
-      const userInfo = JSON.parse(sessionStorage.getItem('userInfo') || {});
+      const userInfo = storage.getItem('userInfo') || {};
 
       try {
         setLoading(true)

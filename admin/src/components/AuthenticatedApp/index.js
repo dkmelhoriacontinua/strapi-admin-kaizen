@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
-//  TODO: DS add loader
-import { auth, LoadingIndicatorPage, AppInfosContext } from '@strapi/helper-plugin';
+import { LoadingIndicatorPage, AppInfosContext } from '@strapi/helper-plugin';
 import { useQueries } from 'react-query';
 import get from 'lodash/get';
 import packageJSON from '../../../../package.json';
@@ -11,10 +10,12 @@ import { fetchAppInfo, fetchCurrentUserPermissions, fetchStrapiLatestRelease } f
 import checkLatestStrapiVersion from './utils/checkLatestStrapiVersion';
 import { getFullName } from '../../utils';
 
+import storage from '../../utils/storage';
+
 const strapiVersion = packageJSON.version;
 
 const AuthenticatedApp = () => {
-  const userInfo = auth.getUserInfo();
+  const userInfo = storage.getItem('userInfo') || {};
   const userName = get(userInfo, 'username') || getFullName(userInfo.firstname, userInfo.lastname);
   const [userDisplayName, setUserDisplayName] = useState(userName);
   const { showReleaseNotification } = useConfigurations();

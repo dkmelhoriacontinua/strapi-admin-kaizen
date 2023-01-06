@@ -10,7 +10,7 @@
 import React, { memo } from 'react';
 import { Redirect, Route } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import { auth } from '@strapi/helper-plugin';
+import storage from '../../utils/storage';
 
 /* eslint-disable react/jsx-curly-newline */
 
@@ -18,7 +18,7 @@ const PrivateRoute = ({ component: Component, path, ...rest }) => (
   <Route
     path={path}
     render={props =>
-      auth.getToken() !== null ? (
+      storage.getItem('jwtToken') !== null ? (
         <Component {...rest} {...props} />
       ) : (
         <Redirect

@@ -10,7 +10,7 @@ export class StorageUtils {
     this.validateStorage();
 
     const formatString = JSON.stringify(value);
-    localStorage.setItem(key, formatString); 
+    localStorage.setItem(key, formatString);
   }
 
   getItem(key) {

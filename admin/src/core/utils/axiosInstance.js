@@ -38,8 +38,10 @@ instance.interceptors.request.use(
       config.data.id_empresa = enterpriseId;
     }
 
+    const token = storage.getItem('jwtToken');
+
     config.headers = {
-      Authorization: `Bearer ${auth.getToken()}`,
+      Authorization: `Bearer ${token}`,
       Accept: 'application/json',
       'Content-Type': 'application/json',
     };

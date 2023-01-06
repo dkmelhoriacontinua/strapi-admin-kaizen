@@ -9,7 +9,6 @@ import {
   Form,
   GenericInput,
   SettingsPageTitle,
-  auth,
   useAppInfos,
   useFocusWhenNavigate,
   useNotification,
@@ -37,6 +36,7 @@ import { editValidation } from '../utils/validations/users';
 import { Select, Option } from '@strapi/design-system/Select';
 import { makeSelectModelLinks } from '../../../../../content-manager/pages/App/selectors';
 import { useSelector, shallowEqual } from 'react-redux';
+import storage from '../../../../../utils/storage';
 
 const fieldsToPick = ['email', 'firstname', 'lastname', 'username', 'isActive', 'roles', 'permission'];
 
@@ -90,7 +90,6 @@ const EditPage = ({ canUpdate }) => {
 
         push('/');
       }
-      console.log(err.response.status);
     },
   });
 
@@ -99,7 +98,7 @@ const EditPage = ({ canUpdate }) => {
     ( async () => {
       try {
         setLoading(true)
-        const userInfos = auth.getUserInfo();
+        const userInfos = storage.getItem('userInfo') || {};
         fetchUserPermission(userInfos.id).then((res) => {
           setPermissionUserLogged(res[0].id_permissao)
         });
@@ -169,12 +168,12 @@ const EditPage = ({ canUpdate }) => {
       const frentes = JSON.stringify(frontsSelecteds);
       const usinas = JSON.stringify(factoriesSelected);
 
-      const userInfos = auth.getUserInfo();
+      const userInfos = storage.getItem('userInfo') || {};
       await postUserPermission({ id_usuario: id, id_permissao: body.permission, frentes, usinas });
 
       // The user is updating himself
       if (id.toString() === userInfos.id.toString()) {
-        auth.setUserInfo(data);
+        storage.setItem('userInfo' , data);
 
         const userDisplayName = get(body, 'username') || getFullName(body.firstname, body.lastname);
 

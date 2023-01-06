@@ -13,14 +13,16 @@ import {
   useNotification,
   TrackingContext,
 } from '@strapi/helper-plugin';
-import { SkipToContent } from '@strapi/design-system/Main';
 import { useIntl } from 'react-intl';
-import PrivateRoute from '../../components/PrivateRoute';
-import { createRoute, makeUniqueRoutes } from '../../utils';
+import { SkipToContent } from '@strapi/design-system/Main';
+
 import AuthPage from '../AuthPage';
 import NotFoundPage from '../NotFoundPage';
-import { getUID } from './utils';
+import PrivateRoute from '../../components/PrivateRoute';
+
 import routes from './utils/routes';
+import storage from '../../utils/storage';
+import { createRoute, makeUniqueRoutes } from '../../utils';
 
 const AuthenticatedApp = lazy(() =>
   import(/* webpackChunkName: "Admin-authenticatedApp" */ '../../components/AuthenticatedApp')
@@ -38,7 +40,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const currentToken = auth.getToken();
+    const currentToken = storage.getItem('jwtToken');
 
     const renewToken = async () => {
       try {
@@ -48,7 +50,8 @@ function App() {
           method: 'POST',
           body: { token: currentToken },
         });
-        auth.updateToken(token);
+
+        storage.setItem('jwtToken', token);
       } catch (err) {
         // Refresh app
         auth.clearAppStorage();

@@ -35,6 +35,8 @@ import { fetchUser, putUser } from './utils/api';
 import schema from './utils/schema';
 import { getFullName } from '../../utils';
 
+import storage from '../../utils/storage';
+
 const PasswordInput = styled(TextInput)`
   ::-ms-reveal {
     display: none;
@@ -86,8 +88,8 @@ const ProfilePage = () => {
   const submitMutation = useMutation(body => putUser(omit(body, 'confirmPassword')), {
     onSuccess: async data => {
       await queryClient.invalidateQueries('user');
+      storage.setItem('userInfo', data);
 
-      auth.setUserInfo(data);
       const userDisplayName = data.username || getFullName(data.firstname, data.lastname);
       setUserDisplayName(userDisplayName);
       changeLocale(data.preferedLanguage);
