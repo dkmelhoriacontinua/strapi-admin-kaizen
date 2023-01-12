@@ -1,19 +1,19 @@
 import React from 'react';
-import { useIntl } from 'react-intl';
+
 import PropTypes from 'prop-types';
-import basename from '../../../../../../core/utils/basename';
 import MagicLinkWrapper from './MagicLinkWrapper';
+import basename from '../../../../../../core/utils/basename';
 
 const MagicLink = ({ registrationToken }) => {
-  const { formatMessage } = useIntl();
-  const target = `${window.location.origin}${basename}auth/register?registrationToken=${registrationToken}`;
+  const url = (CUSTOM_VARIABLES.NODE_ENV === 'production')
+    ? 'https://kaizenlog.dailykaizenconsultoria.com.br'
+    : 'https://kaizen-house-hml.enesolucoes.com.br';
+
+  const target = `${url}${basename}auth/register?registrationToken=${registrationToken}`;
 
   return (
     <MagicLinkWrapper target={target}>
-      {formatMessage({
-        id: 'app.components.Users.MagicLink.connect',
-        defaultMessage: 'Copy and share this link to give access to this user',
-      })}
+      Copie e compartilhe este link para dar acesso a este usuário
     </MagicLinkWrapper>
   );
 };
