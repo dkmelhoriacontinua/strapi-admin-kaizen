@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { Box } from '@strapi/design-system/Box';
 import { Tabs, Tab, TabPanels, TabPanel } from '@strapi/design-system/Tabs';
 import { EmptyStateLayout } from '@strapi/design-system/EmptyStateLayout';
 import { Button } from '@strapi/design-system/Button';
@@ -14,6 +13,8 @@ import { Loader } from '@strapi/design-system/Loader';
 import { Flex } from '@strapi/design-system/Flex';
 import { useHistory } from 'react-router-dom';
 import { useNotification } from '@strapi/helper-plugin';
+
+import { backInstance } from '../../services/backendInstance';
 
 import {
   TabGroupStyled,
@@ -30,10 +31,9 @@ import {
   WrapperContentNotification,
   LoadMoreButton
 } from './styled'
-import { backInstance } from '../../services/backendInstance';
 
 function formatDate(date) {
-  return new Date(date).toLocaleString().substring(0, 16).replace(' ', ' - ');
+  return new Date(date).toLocaleString('pt-BR').substring(0, 16).replace(' ', ' - ');
 }
 
 function formatTimeString(date) {
@@ -205,7 +205,6 @@ const WrapperNotification = ({
 }) => {
   const data = get(content, 'data', []);
   const total = get(content, 'total', []);
-  const pageSize = get(content, 'pageSize', 0);
   const isNextPage = get(content, 'isNextPage', false);
 
   function renderListNotifications() {
@@ -222,7 +221,7 @@ const WrapperNotification = ({
       );
       const Component = isBreakingNotification ? BreakingNotification : ReminderNotication;
 
-      return <Component {...pickContent}/>
+      return <Component {...pickContent} />
     });
   }
   const commonRuleToRefresh = (( data.length < total));
@@ -350,7 +349,15 @@ const PopoverNotifications = ({ onDismiss = () => {}}) => {
     />
   );
 
-  const commonProps = { content, isLoading, noContentLayout, requestNotifications, dispatchAction: requestActionNotification, isOpenedTab: !tab, onDismiss };
+  const commonProps = {
+    content,
+    isLoading,
+    noContentLayout,
+    requestNotifications,
+    dispatchAction: requestActionNotification,
+    isOpenedTab: !tab,
+    onDismiss
+  };
 
   return (
     <Portal>
