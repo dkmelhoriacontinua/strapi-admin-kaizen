@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { useIntl } from 'react-intl';
 import { Divider } from '@strapi/design-system/Divider';
@@ -29,6 +29,8 @@ import {
   Container,
   ContainerDiv
 } from './styled'
+import { LoadingIndicatorPage, request, useNotification } from '@strapi/helper-plugin';
+
 
 const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }) => {
   const buttonRef = useRef();
@@ -37,7 +39,6 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
   const [condensed, setCondensed] = usePersistentState('navbar-condensed', true);
   const { userDisplayName } = useAppInfos();
   const { formatMessage } = useIntl();
-  const [menusUser, setMenusUser] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [permissaoMenu, setPermissaoMenu] = useState([]);
   const [plugins, setPlugins] = useState([]);
@@ -50,22 +51,21 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
   const [hasPermissionUsers, setHasPermissionUsers] = useState([])
   const [isMaster, setIsMaster]= useState(false)
 
-  const { useEffect } = require('react');
-  const { LoadingIndicatorPage, request, useNotification } = require('@strapi/helper-plugin');
   const toggleNotification = useNotification();
 
   const { collectionTypeLinks } = useModels();
+
   useEffect(() => {
     ( async () => {
-
       let permission = permissaoMenu
       if (collectionTypeLinks.length && !collectionType.length) {
-        if(!permissaoMenu.length) permission = await findPermission()
-        const collectionTypeLinksFiltered = await collectionTypeLinks.filter(async(link) => {
-          const linkName = link.name.split(".")
+        if(!permissaoMenu.length) permission = await findPermission();
 
+        const collectionTypeLinksFiltered = await collectionTypeLinks.filter((link) => {
+          const linkName = link.name.split(".");
           const findLink2 = permission && permission.find(item => item.menu === linkName[1]);
-          if(findLink2?.listar) return (findLink2)
+
+          if(findLink2?.listar) return (findLink2);
         });
 
         setCollectionType(collectionTypeLinksFiltered)
@@ -75,7 +75,6 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
   }, [collectionTypeLinks]);
 
   useEffect(() => {
-
     ( async () => {
         try {
           setCondensed(true)
@@ -151,7 +150,7 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
       const { results }  = await request('/content-manager/collection-types/api::permissao-menu.permissao-menu/?pageSize=1000&filters[$and][0][permissao][id][$eq]=' + result.id_permissao, { method: 'GET' });
       setPermissaoMenu(results)
 
-      const permissionDetail = await request('/content-manager/collection-types/api::permissao.permissao?page=1&pageSize=1&sort=id:ASC&filters[$and][0][id][$eq]='+result.id_permissao, { method: 'GET' });
+      const permissionDetail = await request('/content-manager/collection-types/api::permissao.permissao?page=1&pageSize=1&sort=id:ASC&filters[$and][0][id][$eq]='+ result.id_permissao, { method: 'GET' });
 
       const permissionMaster = permissionDetail.results[0].Nome.toLowerCase() === 'masterdk';
 
@@ -199,15 +198,6 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
     setVisible(s => !s)
   }
 
-  const collectionTypeLinksFiltered = collectionType.filter((link) => {
-    const linkName = link.name.split(".")
-    const findLink2 = permissaoMenu && permissaoMenu.find(item => item.menu === linkName[1]);
-
-    if (findLink2 && (findLink2.listar)) {
-      return (findLink2)
-    }
-  });
-
   return (
     <div>
       {visible && <PopoverNotifications onDismiss={handleToggleNotification}/>}
@@ -224,14 +214,13 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
         <Divider />
         <Container>
           <NavSections id="navsections">
-            <MenuLinkBadge onClick={handleToggleNotification} info={hasNot}/>
+            <MenuLinkBadge onClick={handleToggleNotification} info={hasNot} />
 
-            {(collectionTypeLinksFiltered.length > 0) ? (
+            {(collectionType.length > 0) ? (
               <NavLink to="/content-manager" icon={<Write/>}>
                 {formatMessage({id: 'content-manager.plugin.name', defaultMessage: 'Content manager'})}
               </NavLink>
-            ) : <ContainerDiv />}
-
+            ) : null}
 
             {filteredPluginSection.length > 0 ? (
               <NavSection label="Plugins">
