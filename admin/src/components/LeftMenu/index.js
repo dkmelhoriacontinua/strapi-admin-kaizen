@@ -78,21 +78,35 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
     ( async () => {
         try {
           setCondensed(true)
-          const permissions = !permissaoMenu.length ? await findPermission() : permissaoMenu
+          const permissions = !permissaoMenu.length ? await findPermission() : permissaoMenu;
 
           let listPlugins = JSON.parse(sessionStorage.getItem('pluginsSectionLinks') || []);
 
           listPlugins = listPlugins.filter(item =>
             item.to !== '/plugins/upload' &&
             item.to !== '/plugins/permissoes'
-          )
+          );
 
           const pluginsPermitidos = []
-          listPlugins.map(item => {
+          listPlugins.forEach(item => {
+            if (item?.intlLabel?.defaultMessage === 'Ajustes Kaizen-log') {
+              const itemsMenu = permissions.filter(itemT => (
+                itemT.menu === item.intlLabel.defaultMessage && itemT?.listar
+              ));
+
+              if (itemsMenu.length) {
+                const itemFormatted = item.intlLabel.id.split('.');
+                pluginsPermitidos.push(itemFormatted[0]);
+              }
+
+              return;
+            }
+
             const itemsMenu = permissions.filter(itemT => itemT.menu === item.intlLabel.defaultMessage)
+
             if(itemsMenu.length || item.to === '/plugins/chamados') {
-              const itemFormatted = item.intlLabel.id.split('.')
-              pluginsPermitidos.push(itemFormatted[0])
+              const itemFormatted = item.intlLabel.id.split('.');
+              pluginsPermitidos.push(itemFormatted[0]);
             }
           })
 
