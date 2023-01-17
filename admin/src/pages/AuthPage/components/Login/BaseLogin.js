@@ -8,7 +8,6 @@ import { Flex } from '@strapi/design-system/Flex';
 import { Link } from '@strapi/design-system/Link';
 import { Button } from '@strapi/design-system/Button';
 import { TextInput } from '@strapi/design-system/TextInput';
-import { Checkbox } from '@strapi/design-system/Checkbox';
 import { Typography } from '@strapi/design-system/Typography';
 import { Form } from '@strapi/helper-plugin';
 import PropTypes from 'prop-types';
@@ -25,7 +24,7 @@ const PasswordInput = styled(TextInput)`
   }
 `;
 
-const Login = ({ onSubmit, schema, children }) => {
+const Login = ({ onSubmit, schema, children, forceLogin }) => {
   const [passwordShown, setPasswordShown] = useState(false);
   const { formatMessage } = useIntl();
 
@@ -72,6 +71,11 @@ const Login = ({ onSubmit, schema, children }) => {
                   >
                     {errors.errorMessage}
                   </Typography>
+                )}
+                {forceLogin && (
+                  <Button type="submit" style={{ margin: "12px 0" }}>
+                    Clique aqui para forçar login
+                  </Button>
                 )}
               </Column>
 
@@ -135,8 +139,8 @@ const Login = ({ onSubmit, schema, children }) => {
                   }
                   required
                 />
-                
-                <Button fullWidth type="submit">
+
+                <Button fullWidth type="submit" disabled={forceLogin}>
                   {formatMessage({ id: 'Auth.form.button.login', defaultMessage: 'Login' })}
                 </Button>
               </Stack>

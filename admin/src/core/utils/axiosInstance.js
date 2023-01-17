@@ -5,7 +5,8 @@ import {
   storage,
   formatUrlWithNewFilter,
   formatFilterWithEnterpriseId,
-  validateUnrelatedDataServices
+  validateUnrelatedDataServices,
+  validateLicenseAccessInteceptor
 } from '../../utils';
 
 const instance = axios.create({
@@ -18,6 +19,14 @@ instance.interceptors.request.use(
     const enterpriseId = enterprise?.externalId;
 
     if (!enterpriseId) throw new Error("Empresa não identificada.");
+
+    const { isValid, hasData } = await validateLicenseAccessInteceptor();
+
+    if (!isValid && hasData) {
+      auth.clearAppStorage();
+      window.location.reload();
+      return;
+    }
 
     const isAnUnrelatedDataServices = validateUnrelatedDataServices(config?.url);
 
