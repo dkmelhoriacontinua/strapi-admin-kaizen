@@ -89,7 +89,7 @@ const ModalForm = ({ queryName, onToggle }) => {
 
       const enterprise = storage.getItem('enterprise');
       const enterpriseId = enterprise?.externalId;
-  
+
       if (!enterpriseId) throw new Error("Empresa não identificada.");
 
       await postUserPermission({
@@ -201,7 +201,7 @@ const ModalForm = ({ queryName, onToggle }) => {
   let id_permissao = null
 
   if(listPermissions && listPermissions?.data?.length) {
-    const {id} = JSON.parse(sessionStorage.getItem('userInfo') || {});
+    const {id} = storage.getItem('userInfo') || {};
     fetchUserPermission(id).then((res) => {
       id_permissao = res[0]?.id_permissao
     });

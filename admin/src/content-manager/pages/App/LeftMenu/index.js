@@ -24,6 +24,8 @@ import {
   request,
 } from '@strapi/helper-plugin';
 
+import storage from '../../../../utils/storage';
+
 const matchByTitle = (links, search) =>
   matchSorter(links, toLower(search), { keys: [item => toLower(item.title)] });
 
@@ -41,7 +43,7 @@ const LeftMenu = () => {
   useEffect(() => {
     const getData = async () => {
 
-      const userInfo = JSON.parse(sessionStorage.getItem('userInfo') || {});
+      const userInfo = storage.getItem('userInfo') || {};
 
       try {
 

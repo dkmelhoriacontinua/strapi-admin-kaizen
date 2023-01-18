@@ -11,7 +11,7 @@ import useLocalesProvider from '../../components/LocalesProvider/useLocalesProvi
 import formatAPIErrors from '../../utils/formatAPIErrors';
 import init from './init';
 import { initialState, reducer } from './reducer';
-import storage from './utils/storage'; 
+import storage from '../../utils/storage';
 import { size } from 'lodash';
 
 const AuthPage = ({ hasAdmin, setHasAdmin }) => {
@@ -117,10 +117,9 @@ const AuthPage = ({ hasAdmin, setHasAdmin }) => {
 
       const enterpriseDetails = await getEnterpriseDetails(token, user?.id);
 
+      storage.setItem('jwtToken', token);
       storage.setItem('enterprise', enterpriseDetails);
-
-      auth.setToken(token, body.rememberMe);
-      auth.setUserInfo(user, body.rememberMe);
+      storage.setItem('userInfo', user);
 
       push('/');
     } catch (err) {
@@ -161,8 +160,11 @@ const AuthPage = ({ hasAdmin, setHasAdmin }) => {
         cancelToken: source.token,
       });
 
-      auth.setToken(token, false);
-      auth.setUserInfo(user, false);
+      const enterpriseDetails = await getEnterpriseDetails(token, user?.id);
+
+      storage.setItem('jwtToken', token);
+      storage.setItem('enterprise', enterpriseDetails);
+      storage.setItem('userInfo', user);
 
       if (
         (authType === 'register' && body.userInfo.news === true) ||
@@ -206,10 +208,12 @@ const AuthPage = ({ hasAdmin, setHasAdmin }) => {
         cancelToken: source.token,
       });
 
-      auth.setToken(token, false);
-      auth.setUserInfo(user, false);
+      const enterpriseDetails = await getEnterpriseDetails(token, user?.id);
 
-      // Redirect to the homePage
+      storage.setItem('jwtToken', token);
+      storage.setItem('enterprise', enterpriseDetails);
+      storage.setItem('userInfo', user);
+
       push('/');
     } catch (err) {
       if (err.response) {
@@ -232,7 +236,7 @@ const AuthPage = ({ hasAdmin, setHasAdmin }) => {
     const BASE_URL = (CUSTOM_VARIABLES.NODE_ENV === 'production')
       ? 'https://kaizenlog.dailykaizenconsultoria.com.br/content-manager/collection-types'
       : 'https://kaizen-house-hml.enesolucoes.com.br/content-manager/collection-types';
-      
+
     const enterpriseDetails = {
       id: null,
       externalId: null
@@ -260,7 +264,7 @@ const AuthPage = ({ hasAdmin, setHasAdmin }) => {
           }
         }
       );
-      
+
       const enterprise = get(enterpriseDetailsResponse, ['data', 'results', '0']);
 
       enterpriseDetails.id = enterprise?.id;
@@ -274,7 +278,7 @@ const AuthPage = ({ hasAdmin, setHasAdmin }) => {
   // the endpoint does not exist or
   // there is already an admin user oo
   // the user is already logged in
-  if (!forms[authType] || (hasAdmin && authType === 'register-admin') || auth.getToken()) {
+  if (!forms[authType] || (hasAdmin && authType === 'register-admin') || storage.getItem('jwtToken')) {
     return <Redirect to="/" />;
   }
 

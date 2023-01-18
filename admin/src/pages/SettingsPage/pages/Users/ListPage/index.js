@@ -29,6 +29,8 @@ import tableHeaders from './utils/tableHeaders';
 import { Box } from '@strapi/design-system/Box';
 import { Loader } from '@strapi/design-system/Loader';
 
+import storage from '../../../../../utils/storage';
+
 const ContainerLoader = styled.div`
   display: flex;
   align-items: center;
@@ -89,7 +91,7 @@ const ListPage = () => {
 
   const findPermission = async() => {
      if(permissionsUsers?.id) return null
-     const { id } = JSON.parse(sessionStorage.getItem('userInfo') || {});
+     const { id } = storage.getItem('userInfo') || {};
 
      const userPermission = await request('/content-manager/collection-types/api::usuario-permissao.usuario-permissao/?filters[$and][0][id_usuario][$eq]=' + id, { method: 'GET' });
      const result = userPermission.results[0]
