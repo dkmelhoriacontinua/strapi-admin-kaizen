@@ -1,7 +1,12 @@
 import axios from 'axios';
 import { auth } from '@strapi/helper-plugin';
 
-import { formatUrlWithNewFilter, validateUnrelatedDataServices } from '../../utils';
+import {
+  storage,
+  formatUrlWithNewFilter,
+  formatFilterWithEnterpriseId,
+  validateUnrelatedDataServices
+} from '../../utils';
 
 const instance = axios.create({
   baseURL: process.env.STRAPI_ADMIN_BACKEND_URL,
@@ -9,6 +14,11 @@ const instance = axios.create({
 
 instance.interceptors.request.use(
   async config => {
+    const enterprise = storage.getItem('enterprise');
+    const enterpriseId = enterprise?.externalId;
+
+    if (!enterpriseId) throw new Error("Empresa não identificada.");
+
     const isAnUnrelatedDataServices = validateUnrelatedDataServices(config?.url);
 
     if (config?.method === 'post' && isAnUnrelatedDataServices) {
@@ -16,8 +26,22 @@ instance.interceptors.request.use(
       config.url = config?.url + formatUrlWithNewFilter(query_column, "$null", true, config?.url);
     }
 
+    if (config?.method === 'get' || config.url.includes('/content-manager/relations')) {
+      config.url = config.url + formatFilterWithEnterpriseId(enterpriseId, config?.url);
+    }
+
+    if (
+      ['post', 'put'].includes(config?.method)
+      && !config.url.includes('/admin/users')
+      && !config.url.includes('/configuration')
+    ) {
+      config.data.id_empresa = enterpriseId;
+    }
+
+    const token = storage.getItem('jwtToken');
+
     config.headers = {
-      Authorization: `Bearer ${auth.getToken()}`,
+      Authorization: `Bearer ${token}`,
       Accept: 'application/json',
       'Content-Type': 'application/json',
     };

@@ -1,7 +1,9 @@
 import axios from 'axios';
 import { auth } from '@strapi/helper-plugin';
 
-const url = (CUSTOM_VARIABLES.NODE_ENV === 'production')? 
+import { storage, formatFilterWithEnterpriseId } from '../utils';
+
+const url = (CUSTOM_VARIABLES.NODE_ENV === 'production')?
   'https://listagem-calculos.dailykaizenconsultoria.com.br' :
   'https://kaizen-house-hml-calc.enesolucoes.com.br'
 
@@ -9,10 +11,23 @@ const backInstance = axios.create({
   baseURL: url,
 });
 
-const token = JSON.parse(sessionStorage.getItem('jwtToken'))
-
 backInstance.interceptors.request.use(
   async config => {
+    const enterprise = storage.getItem('enterprise');
+    const enterpriseId = enterprise?.externalId;
+
+    if (!enterpriseId) throw new Error('Empresa não identificada.');
+
+    if (config?.method === 'get') {
+      config.url = config.url + formatFilterWithEnterpriseId(enterpriseId, config?.url, false);
+    }
+
+    if (['post', 'put', 'patch'].includes(config.method)) {
+      config.data.enterprise_id = enterpriseId;
+    }
+
+    const token = storage.getItem('jwtToken');
+
     config.headers = {
       Authorization: `Bearer ${token}`,
       Accept: 'application/json',

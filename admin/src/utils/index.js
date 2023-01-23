@@ -9,3 +9,5 @@ export { default as getRequestUrl } from './getRequestUrl';
 export { default as getFullName } from './getFullName';
 export { default as formatUrlWithNewFilter } from './formatUrlWithNewFilter';
 export { default as validateUnrelatedDataServices } from './validateUnrelatedDataServices';
+export { default as storage } from './storage';
+export { default as formatFilterWithEnterpriseId } from './formatFilterWithEnterpriseId';

@@ -29,11 +29,13 @@ import tableHeaders from './utils/tableHeaders';
 import { Box } from '@strapi/design-system/Box';
 import { Loader } from '@strapi/design-system/Loader';
 
+import storage from '../../../../../utils/storage';
+
 const ContainerLoader = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100vh
+  height: 100vh;
 `
 
 const ListPage = () => {
@@ -89,7 +91,7 @@ const ListPage = () => {
 
   const findPermission = async() => {
      if(permissionsUsers?.id) return null
-     const { id } = JSON.parse(sessionStorage.getItem('userInfo') || {});
+     const { id } = storage.getItem('userInfo') || {};
 
      const userPermission = await request('/content-manager/collection-types/api::usuario-permissao.usuario-permissao/?filters[$and][0][id_usuario][$eq]=' + id, { method: 'GET' });
      const result = userPermission.results[0]
@@ -154,8 +156,8 @@ const ListPage = () => {
 
   let newData = [];
 
-  if (data?.results.length && allPermissions?.data?.length && userPermissions?.data?.length && (idPermissionMaster)) {
-    newData = data?.results.filter(item => {
+  if (data?.length && allPermissions?.data?.length && userPermissions?.data?.length && (idPermissionMaster)) {
+    newData = data?.filter(item => {
       const filterPermissionUsers = userPermissions?.data?.find(itemP => itemP.id_usuario === item.id)
       if (!filterPermissionUsers) return item
       if(!isMaster && (filterPermissionUsers.id_permissao === idPermissionMaster.id)) return null

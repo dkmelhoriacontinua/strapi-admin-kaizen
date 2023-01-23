@@ -16,8 +16,6 @@ export class StorageUtils {
   getItem(key) {
     this.validateStorage();
 
-    localStorage.getItem(key)
-
     const formatJSON = JSON.parse(localStorage.getItem(key));
     return formatJSON;
   }

@@ -1,12 +1,13 @@
 import React, { memo, useCallback, useEffect, useRef, useState, useContext } from 'react';
 import PropTypes from 'prop-types';
+import { useIntl } from 'react-intl';
 import styled from 'styled-components';
 import { connect } from 'react-redux';
 import isEqual from 'react-fast-compare';
 import { bindActionCreators, compose } from 'redux';
-import { useIntl } from 'react-intl';
 import { useHistory, useLocation } from 'react-router-dom';
 import get from 'lodash/get';
+import axios from 'axios';
 import { stringify } from 'qs';
 import {
   NoPermissions,
@@ -16,34 +17,40 @@ import {
   useQueryParams,
   useNotification,
   useRBACProvider,
-  useTracking, request } from '@strapi/helper-plugin';
-import { IconButton } from '@strapi/design-system/IconButton';
-import { Main } from '@strapi/design-system/Main';
-import { Box } from '@strapi/design-system/Box';
-import { Flex } from '@strapi/design-system/Flex';
-import { HeaderLayout } from '@strapi/design-system/Layout';
-import { useNotifyAT } from '@strapi/design-system/LiveRegions';
-import { Button } from '@strapi/design-system/Button';
-import { Link } from '@strapi/design-system/Link';
-import ArrowLeft from '@strapi/icons/ArrowLeft';
-import Plus from '@strapi/icons/Plus';
+  useTracking,
+  request
+} from '@strapi/helper-plugin';
 import Cog from '@strapi/icons/Cog';
-import axios from 'axios';
-import { axiosInstance } from '../../../core/utils';
-import { InjectionZone } from '../../../shared/components';
-import DynamicTable from '../../components/DynamicTable';
-import permissions from '../../../permissions';
-import { getRequestUrl, getTrad } from '../../utils';
-import FieldPicker from './FieldPicker';
-import PaginationFooter from './PaginationFooter';
-import { getData, getDataSucceeded, onChangeListHeaders, onResetListHeaders } from './actions';
-import makeSelectListView from './selectors';
-import { buildQueryString } from './utils';
-import AttributeFilter from '../../components/AttributeFilter';
-import { Loader } from '@strapi/design-system/Loader';
-import ModelsContext from '../../contexts/ModelsContext';
 import Eye from '@strapi/icons/Eye';
+import Plus from '@strapi/icons/Plus';
+import { Box } from '@strapi/design-system/Box';
+import ArrowLeft from '@strapi/icons/ArrowLeft';
+import { Flex } from '@strapi/design-system/Flex';
+import { Link } from '@strapi/design-system/Link';
+import { Main } from '@strapi/design-system/Main';
 import EyeStriked from '@strapi/icons/EyeStriked';
+import { Loader } from '@strapi/design-system/Loader';
+import { Button } from '@strapi/design-system/Button';
+import { HeaderLayout } from '@strapi/design-system/Layout';
+import { IconButton } from '@strapi/design-system/IconButton';
+import { useNotifyAT } from '@strapi/design-system/LiveRegions';
+
+import { axiosInstance } from '../../../core/utils';
+import { getRequestUrl, getTrad } from '../../utils';
+
+import FieldPicker from './FieldPicker';
+import makeSelectListView from './selectors';
+import PaginationFooter from './PaginationFooter';
+import DynamicTable from '../../components/DynamicTable';
+
+import permissions from '../../../permissions';
+import ModelsContext from '../../contexts/ModelsContext';
+import { InjectionZone } from '../../../shared/components';
+import AttributeFilter from '../../components/AttributeFilter';
+
+import { buildQueryString } from './utils';
+import storage from '../../../utils/storage';
+import { getData, getDataSucceeded, onChangeListHeaders, onResetListHeaders } from './actions';
 
 const cmPermissions = permissions.contentManager;
 
@@ -107,7 +114,7 @@ function ListView({
   useEffect(() => {
     const getData = async () => {
 
-      const userInfo = JSON.parse(sessionStorage.getItem('userInfo') || {});
+      const userInfo = storage.getItem('userInfo') || {};
 
       try {
         setLoading(true)

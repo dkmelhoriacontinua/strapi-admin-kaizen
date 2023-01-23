@@ -1,6 +1,11 @@
 import React, { useRef, useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { useIntl } from 'react-intl';
+import Lock from '@strapi/icons/Lock';
+import Exit from '@strapi/icons/Exit';
+import Users from '@strapi/icons/Users';
+import Write from  '@strapi/icons/Write';
+import { auth, usePersistentState, useAppInfos } from '@strapi/helper-plugin';
 import { Divider } from '@strapi/design-system/Divider';
 import {
   MainNav,
@@ -11,18 +16,17 @@ import {
   NavUser,
   NavCondense,
 } from '@strapi/design-system/MainNav';
+import { Stack } from '@strapi/design-system/Stack';
 import { FocusTrap } from '@strapi/design-system/FocusTrap';
 import { Typography } from '@strapi/design-system/Typography';
-import { Stack } from '@strapi/design-system/Stack';
-import Write from  '@strapi/icons/Write';
-import Users from '@strapi/icons/Users';
-import Lock from '@strapi/icons/Lock';
-import Exit from '@strapi/icons/Exit';
-import { auth, usePersistentState, useAppInfos } from '@strapi/helper-plugin';
+
+import MenuLinkBadge from './MenuLinkBadge';
+import PopoverNotifications from './PopoverNotifications';
+
+import storage from '../../utils/storage';
 import useConfigurations from '../../hooks/useConfigurations';
 import useModels from '../../content-manager/pages/App/useModels';
-import PopoverNotifications from './PopoverNotifications'
-import MenuLinkBadge from './MenuLinkBadge'
+
 import {
   LinkUserWrapper,
   LinkUser,
@@ -155,7 +159,7 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
 
   const findPermission = async() => {
     if(permissaoMenu.length) return null
-    const { id } = JSON.parse(sessionStorage.getItem('userInfo') || {});
+    const { id } = storage.getItem('userInfo') || {};
 
     const userPermission = await request('/content-manager/collection-types/api::usuario-permissao.usuario-permissao/?filters[$and][0][id_usuario][$eq]=' + id, { method: 'GET' });
     const result = userPermission.results[0]

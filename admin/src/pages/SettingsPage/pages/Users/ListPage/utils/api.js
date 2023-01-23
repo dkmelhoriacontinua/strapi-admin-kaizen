@@ -1,9 +1,8 @@
 import { axiosInstance } from '../../../../../../core/utils';
+import { backInstance } from '../../../../../../services/backendInstance';
 
 const fetchData = async (search, notify) => {
-  const {
-    data: { data },
-  } = await axiosInstance.get(`/admin/users${search}`);
+  const { data } = await backInstance.get(`/users/`);
 
   notify();
 
