@@ -12,8 +12,7 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import LeftMenu from '../../components/LeftMenu';
 import AppLayout from '../../layouts/AppLayout';
-import { useMenu, useReleaseNotification } from '../../hooks';
-import Onboarding from './Onboarding';
+import { useMenu } from '../../hooks';
 import { createRoute } from '../../utils';
 
 const CM = lazy(() =>
@@ -105,7 +104,6 @@ const Admin = () => {
             <Route path="" component={NotFoundPage} />
           </Switch>
         </Suspense>
-        <Onboarding />
       </AppLayout>
     </DndProvider>
   );
