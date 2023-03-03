@@ -35,7 +35,7 @@ import {
 } from './styled'
 
 function formatDate(date) {
-  return new Date(date).toLocaleString('pt-BR').substring(0, 16).replace(' ', ' - ');
+  return new Date(date).toLocaleString('pt-BR').replace(/[,-]/, '').substring(0, 16);
 }
 
 function formatTimeString(date) {
