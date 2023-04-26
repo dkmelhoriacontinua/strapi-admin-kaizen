@@ -106,6 +106,7 @@ const LeftMenu = () => {
     'usina',
     'empresa',
     'usuario-empresa',
+    'status-local',
   ]
 
   const collectionTypeLinksFiltered = collectionTypeLinks.filter((link) => {
