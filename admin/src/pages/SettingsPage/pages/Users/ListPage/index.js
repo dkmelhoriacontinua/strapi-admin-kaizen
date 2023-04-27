@@ -30,6 +30,7 @@ import { Box } from '@strapi/design-system/Box';
 import { Loader } from '@strapi/design-system/Loader';
 
 import storage from '../../../../../utils/storage';
+import { backInstance } from '../../../../../services/backendInstance';
 
 const ContainerLoader = styled.div`
   display: flex;
@@ -39,20 +40,22 @@ const ContainerLoader = styled.div`
 `
 
 const ListPage = () => {
-  const [isModalOpened, setIsModalOpen] = useState(false);
-  const [permissionsUsers, setPermissionsUsers] = useState({});
+  const [data, setData] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isMaster, setIsMaster] = useState(false);
+  const [isModalOpened, setIsModalOpen] = useState(false);
+  const [permissionsUsers, setPermissionsUsers] = useState({});
 
-  const {
-    allowedActions: { canCreate, canDelete, canRead },
-  } = useRBAC(adminPermissions.settings.users);
+  const { search } = useLocation();
+  const { formatMessage } = useIntl();
   const queryClient = useQueryClient();
   const toggleNotification = useNotification();
-  const { formatMessage } = useIntl();
-  const { search } = useLocation();
+  const { allowedActions: {canRead } } = useRBAC(adminPermissions.settings.users);
+
   useFocusWhenNavigate();
+
   const { notifyStatus } = useNotifyAT();
+
   const queryName = ['users', search];
   const queryName2 = ['permissions', search];
   const queryName3 = ['usersPermissions', search];
@@ -62,65 +65,56 @@ const ListPage = () => {
     defaultMessage: 'Users',
   });
 
-  const notifyLoad = () => {
-    notifyStatus(
-      formatMessage(
-        {
-          id: 'app.utils.notify.data-loaded',
-          defaultMessage: 'The {target} has loaded',
-        },
-        { target: title }
-      )
-    );
-  };
-
   useEffect(() => {
-
-    ( async () => {
-      try {
-        setLoading(true)
-        await findPermission();
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false)
-      }
+    (async () => {
+      await findPermission();
+      await findAllUsers();
     }
     )();
   }, []);
 
-  const findPermission = async() => {
-     if(permissionsUsers?.id) return null
-     const { id } = storage.getItem('userInfo') || {};
+  const findPermission = async () => {
+    try {
+      setLoading(true);
 
-     const userPermission = await request('/content-manager/collection-types/api::usuario-permissao.usuario-permissao/?filters[$and][0][id_usuario][$eq]=' + id, { method: 'GET' });
-     const result = userPermission.results[0]
+      if(permissionsUsers?.id) return null;
 
-     if (result && result.id_permissao) {
-       const { results }  = await request('/content-manager/collection-types/api::permissao-menu.permissao-menu/?pageSize=1000&filters[$and][0][permissao][id][$eq]=' + result.id_permissao, { method: 'GET' });
+      const { id } = storage.getItem('userInfo') || {};
 
-       const findPermissionUsers = results.find(item => item.menu === 'Usuários')
-       setPermissionsUsers(findPermissionUsers)
+      const userPermission = await request('/content-manager/collection-types/api::usuario-permissao.usuario-permissao/?filters[$and][0][id_usuario][$eq]=' + id, { method: 'GET' });
+      const result = userPermission.results[0]
 
-       const permissionDetail = await request('/content-manager/collection-types/api::permissao.permissao?page=1&pageSize=1&sort=id:ASC&filters[$and][0][id][$eq]='+result.id_permissao, { method: 'GET' });
+      if (result && result.id_permissao) {
+        const { results }  = await request('/content-manager/collection-types/api::permissao-menu.permissao-menu/?pageSize=1000&filters[$and][0][permissao][id][$eq]=' + result.id_permissao, { method: 'GET' });
 
-       const permissionMaster = permissionDetail.results[0].Nome.toLowerCase() === 'masterdk';
-       setIsMaster(permissionMaster)
-     }
-   }
+        const findPermissionUsers = results.find(item => item.menu === 'Usuários')
+        setPermissionsUsers(findPermissionUsers)
 
-  const { status, data, isFetching } = useQuery(queryName, () => fetchData(search, notifyLoad), {
-    enabled: canRead,
-    keepPreviousData: true,
-    retry: false,
-    staleTime: 1000 * 20,
-    onError: () => {
-      toggleNotification({
-        type: 'warning',
-        message: { id: 'notification.error', defaultMessage: 'An error occured' },
-      });
-    },
-  });
+        const permissionDetail = await request('/content-manager/collection-types/api::permissao.permissao?page=1&pageSize=1&sort=id:ASC&filters[$and][0][id][$eq]='+result.id_permissao, { method: 'GET' });
+
+        const permissionMaster = permissionDetail.results[0].Nome.toLowerCase() === 'masterdk';
+        setIsMaster(permissionMaster)
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const findAllUsers = async () => {
+    try {
+      setLoading(true);
+
+      const response = await backInstance.get(`/users/`);
+      setData(response?.data);
+    } catch (error) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
 
   const allPermissions = useQuery(queryName2, () => fetchDataPermission(), {
     enabled: canRead,
@@ -148,26 +142,25 @@ const ListPage = () => {
     },
   });
 
-  let idPermissionMaster = null
+  let idPermissionMaster = null;
 
   if (allPermissions?.data?.length) {
-    idPermissionMaster = allPermissions?.data?.find( item => item?.Nome.toLowerCase() === 'masterdk')
+    idPermissionMaster = allPermissions?.data?.find( item => item?.Nome.toLowerCase() === 'masterdk');
   }
 
   let newData = [];
 
   if (data?.length && allPermissions?.data?.length && userPermissions?.data?.length && (idPermissionMaster)) {
     newData = data?.filter(item => {
-      const filterPermissionUsers = userPermissions?.data?.find(itemP => itemP.id_usuario === item.id)
-      if (!filterPermissionUsers) return item
-      if(!isMaster && (filterPermissionUsers.id_permissao === idPermissionMaster.id)) return null
-      return item
-    })
-  }
+      const filterPermissionUsers = userPermissions?.data?.find(itemP => itemP.id_usuario === item.id);
 
-  const handleToggle = () => {
-    setIsModalOpen(prev => !prev);
-  };
+      if (!filterPermissionUsers) return item;
+
+      if(!isMaster && (filterPermissionUsers.id_permissao === idPermissionMaster.id)) return null;
+
+      return item;
+    });
+  }
 
   const deleteAllMutation = useMutation(ids => deleteData(ids), {
     onSuccess: async () => {
@@ -185,10 +178,13 @@ const ListPage = () => {
     },
   });
 
-  // This can be improved but we need to show an something to the user
-  const isLoading =
-    (status !== 'success' && status !== 'error') || (status === 'success' && isFetching);
+  const handleDelete = (id) => {
+    deleteAllMutation.mutateAsync([id]).then(async () => {
+      await findAllUsers();
+    });
+  }
 
+  const handleToggle = () => setIsModalOpen(prev => !prev);
 
   if (loading)
     return (
@@ -210,12 +206,13 @@ const ListPage = () => {
       })}
     </Button>
   ) : (
-    undefined
+    null
   );
 
   return (
-    <Main aria-busy={isLoading}>
+    <Main aria-busy={loading}>
       <SettingsPageTitle name="Users" />
+
       <HeaderLayout
         primaryAction={createAction}
         title={title}
@@ -224,7 +221,8 @@ const ListPage = () => {
           defaultMessage: 'All the users who have access to the Strapi admin panel',
         })}
       />
-      {permissionsUsers?.listar && (
+
+      {/* {permissionsUsers?.listar && (
         <ActionLayout
           startActions={
             <>
@@ -238,32 +236,31 @@ const ListPage = () => {
             </>
           }
         />
-      )}
+      )} */}
 
       <Box paddingLeft={[10, 5, 1]} paddingRight={[10, 5, 1]}>
         {!permissionsUsers?.listar && <NoPermissions />}
-        {status === 'error' && <div>TODO: An error occurred</div>}
         {permissionsUsers?.listar && (
           <>
             <DynamicTable
               contentType="Users"
-              isLoading={isLoading}
+              isLoading={loading}
               onConfirmDeleteAll={deleteAllMutation.mutateAsync}
-              onConfirmDelete={id => deleteAllMutation.mutateAsync([id])}
+              onConfirmDelete={handleDelete}
               headers={tableHeaders}
               rows={newData}
               withBulkActions
               withMainAction={permissionsUsers?.excluir}
             >
-              <TableRows
-                canDelete={permissionsUsers?.excluir}
-                headers={tableHeaders}
-                rows={newData || []}
-                withBulkActions
-                withMainAction={permissionsUsers?.excluir}
-              />
+            <TableRows
+              rows={newData}
+              withBulkActions
+              headers={tableHeaders}
+              canDelete={permissionsUsers?.excluir}
+              withMainAction={permissionsUsers?.excluir}
+            />
             </DynamicTable>
-            <PaginationFooter pagination={data?.pagination} />
+            {/* <PaginationFooter pagination={data?.pagination} /> */}
           </>
         )}
       </Box>
