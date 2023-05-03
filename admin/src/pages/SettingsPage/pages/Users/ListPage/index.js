@@ -40,9 +40,8 @@ const ContainerLoader = styled.div`
 `
 
 const ListPage = () => {
-  const [data, setData] = useState(false);
+  const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isMaster, setIsMaster] = useState(false);
   const [isModalOpened, setIsModalOpen] = useState(false);
   const [permissionsUsers, setPermissionsUsers] = useState({});
 
@@ -54,11 +53,7 @@ const ListPage = () => {
 
   useFocusWhenNavigate();
 
-  const { notifyStatus } = useNotifyAT();
-
   const queryName = ['users', search];
-  const queryName2 = ['permissions', search];
-  const queryName3 = ['usersPermissions', search];
 
   const title = formatMessage({
     id: 'Settings.permissions.users.listview.header.title',
@@ -89,11 +84,6 @@ const ListPage = () => {
 
         const findPermissionUsers = results.find(item => item.menu === 'Usuários')
         setPermissionsUsers(findPermissionUsers)
-
-        const permissionDetail = await request('/content-manager/collection-types/api::permissao.permissao?page=1&pageSize=1&sort=id:ASC&filters[$and][0][id][$eq]='+result.id_permissao, { method: 'GET' });
-
-        const permissionMaster = permissionDetail.results[0].Nome.toLowerCase() === 'masterdk';
-        setIsMaster(permissionMaster)
       }
     } catch (error) {
       console.error(error);
@@ -113,53 +103,6 @@ const ListPage = () => {
     } finally {
       setLoading(false);
     }
-  }
-
-
-  const allPermissions = useQuery(queryName2, () => fetchDataPermission(), {
-    enabled: canRead,
-    keepPreviousData: true,
-    retry: false,
-    staleTime: 1000 * 20,
-    onError: () => {
-      toggleNotification({
-        type: 'warning',
-        message: { id: 'notification.error', defaultMessage: 'An error occured' },
-      });
-    },
-  });
-
-  const userPermissions = useQuery(queryName3, () => fetchDataUsersPermission(), {
-    enabled: canRead,
-    keepPreviousData: true,
-    retry: false,
-    staleTime: 1000 * 20,
-    onError: () => {
-      toggleNotification({
-        type: 'warning',
-        message: { id: 'notification.error', defaultMessage: 'An error occured' },
-      });
-    },
-  });
-
-  let idPermissionMaster = null;
-
-  if (allPermissions?.data?.length) {
-    idPermissionMaster = allPermissions?.data?.find( item => item?.Nome.toLowerCase() === 'masterdk');
-  }
-
-  let newData = [];
-
-  if (data?.length && allPermissions?.data?.length && userPermissions?.data?.length && (idPermissionMaster)) {
-    newData = data?.filter(item => {
-      const filterPermissionUsers = userPermissions?.data?.find(itemP => itemP.id_usuario === item.id);
-
-      if (!filterPermissionUsers) return item;
-
-      if(!isMaster && (filterPermissionUsers.id_permissao === idPermissionMaster.id)) return null;
-
-      return item;
-    });
   }
 
   const deleteAllMutation = useMutation(ids => deleteData(ids), {
@@ -186,12 +129,13 @@ const ListPage = () => {
 
   const handleToggle = () => setIsModalOpen(prev => !prev);
 
-  if (loading)
+  if (loading) {
     return (
       <ContainerLoader>
         <Loader>loading</Loader>
       </ContainerLoader>
-    )
+    );
+  }
 
   const createAction = permissionsUsers?.criar ? (
     <Button
@@ -248,12 +192,12 @@ const ListPage = () => {
               onConfirmDeleteAll={deleteAllMutation.mutateAsync}
               onConfirmDelete={handleDelete}
               headers={tableHeaders}
-              rows={newData}
+              rows={data}
               withBulkActions
               withMainAction={permissionsUsers?.excluir}
             >
             <TableRows
-              rows={newData}
+              rows={data}
               withBulkActions
               headers={tableHeaders}
               canDelete={permissionsUsers?.excluir}
