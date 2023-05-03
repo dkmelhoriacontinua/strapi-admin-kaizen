@@ -96,7 +96,9 @@ const ListPage = () => {
     try {
       setLoading(true);
 
-      const response = await backInstance.get(`/users/`);
+      const { id } = storage.getItem('userInfo') || '';
+
+      const response = await backInstance.get(`/users/?userId=${id}`);
       setData(response?.data);
     } catch (error) {
       console.error(err);
