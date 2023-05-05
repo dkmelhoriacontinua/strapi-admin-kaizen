@@ -27,11 +27,12 @@ import storage from '../../utils/storage';
 import useConfigurations from '../../hooks/useConfigurations';
 import useModels from '../../content-manager/pages/App/useModels';
 
+import { LicenseAccessService } from '../../services/licenseAccessService';
+
 import {
   LinkUserWrapper,
   LinkUser,
   Container,
-  ContainerDiv
 } from './styled'
 import { LoadingIndicatorPage, request, useNotification } from '@strapi/helper-plugin';
 
@@ -188,9 +189,26 @@ const LeftMenu = ({ generalSectionLinks, pluginsSectionLinks, setMenuCondensed }
 
   const handleToggleUserLinks = () => setUserLinksVisible(prev => !prev);
 
-  const handleLogout = () => {
-    auth.clearAppStorage();
+  const removeLicenseAccess = async (user, softwareId, enterpriseId) => {
+    const payload = {
+      softwareId,
+      enterpriseId,
+      licenseAccessedId: String(user?.id),
+    };
+
+    await LicenseAccessService.removeLicenseAccess(payload);
+  }
+
+  const handleLogout = async () => {
+    const user = storage.getItem('userInfo') || {};
+    const enterprise = storage.getItem('enterprise');
+    const softwareId = storage.getItem('softwareId');
+
     handleToggleUserLinks();
+
+    await removeLicenseAccess(user, softwareId, enterprise?.externalId);
+
+    auth.clearAppStorage();
   };
 
   const handleBlur = e => {

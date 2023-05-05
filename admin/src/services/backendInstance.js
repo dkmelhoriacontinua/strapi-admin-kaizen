@@ -1,11 +1,11 @@
 import axios from 'axios';
 import { auth } from '@strapi/helper-plugin';
 
-import { storage, formatFilterWithEnterpriseId } from '../utils';
+import { storage, formatFilterWithEnterpriseId, validateLicenseAccessInteceptor } from '../utils';
 
-const url = (CUSTOM_VARIABLES.NODE_ENV === 'production')?
-  'https://listagem-calculos.dailykaizenconsultoria.com.br' :
-  'https://kaizen-house-hml-calc.enesolucoes.com.br'
+const url = (CUSTOM_VARIABLES.NODE_ENV === 'production')
+  ? 'https://listagem-calculos.dailykaizenconsultoria.com.br'
+  : 'https://kaizen-house-hml-calc.enesolucoes.com.br';
 
 const backInstance = axios.create({
   baseURL: url,
@@ -13,16 +13,34 @@ const backInstance = axios.create({
 
 backInstance.interceptors.request.use(
   async config => {
+    const routesOmit = [
+      '/users/save-license-access',
+      '/users/remove-license-access',
+      '/users/validate-license-access'
+    ];
+
     const enterprise = storage.getItem('enterprise');
     const enterpriseId = enterprise?.externalId;
 
     if (!enterpriseId) throw new Error('Empresa não identificada.');
 
+    const formattedUrl = config.url.split('?')[0];
+
+    if (!routesOmit.includes(formattedUrl)) {
+      const { isValid, hasData } = await validateLicenseAccessInteceptor();
+
+      if (!isValid && hasData) {
+        auth.clearAppStorage();
+        window.location.reload();
+        return;
+      }
+    }
+
     if (config?.method === 'get') {
       config.url = config.url + formatFilterWithEnterpriseId(enterpriseId, config?.url, false);
     }
 
-    if (['post', 'put', 'patch'].includes(config.method)) {
+    if (['post', 'put', 'patch'].includes(config.method) && !routesOmit.includes(config.url)) {
       config.data.enterprise_id = enterpriseId;
     }
 

@@ -1,25 +1,34 @@
-import React, { useEffect, useReducer } from 'react';
+import React, { useEffect, useReducer, useState } from 'react';
+import { Redirect, useRouteMatch, useHistory } from 'react-router-dom';
+import { useQuery } from '@strapi/helper-plugin';
+import PropTypes from 'prop-types';
 import axios from 'axios';
-import camelCase from 'lodash/camelCase';
 import get from 'lodash/get';
 import omit from 'lodash/omit';
-import { Redirect, useRouteMatch, useHistory } from 'react-router-dom';
-import { auth, useQuery } from '@strapi/helper-plugin';
-import PropTypes from 'prop-types';
-import forms from 'ee_else_ce/pages/AuthPage/utils/forms';
+import camelCase from 'lodash/camelCase';
+
 import useLocalesProvider from '../../components/LocalesProvider/useLocalesProvider';
-import formatAPIErrors from '../../utils/formatAPIErrors';
+
 import init from './init';
 import { initialState, reducer } from './reducer';
+import forms from 'ee_else_ce/pages/AuthPage/utils/forms';
+
 import storage from '../../utils/storage';
-import { size } from 'lodash';
+import formatAPIErrors from '../../utils/formatAPIErrors';
+
+import { EnterpriseService } from '../../services/enterpriseService';
+import { LicenseAccessService } from '../../services/licenseAccessService';
 
 const AuthPage = ({ hasAdmin, setHasAdmin }) => {
   const { push } = useHistory();
   const { changeLocale } = useLocalesProvider();
+
+  const [forceLogin, setForceLogin] = useState(false);
+
   const {
     params: { authType },
   } = useRouteMatch('/auth/:authType');
+
   const query = useQuery();
   const { Component, endPoint, fieldsToDisable, fieldsToOmit, inputsPrefix, schema, ...rest } = get(
     forms,
@@ -31,6 +40,7 @@ const AuthPage = ({ hasAdmin, setHasAdmin }) => {
     initialState,
     init
   );
+
   const CancelToken = axios.CancelToken;
   const source = CancelToken.source();
 
@@ -115,20 +125,43 @@ const AuthPage = ({ hasAdmin, setHasAdmin }) => {
         changeLocale(user.preferedLanguage);
       }
 
-      const enterpriseDetails = await getEnterpriseDetails(token, user?.id);
+      const { externalId, softwareId } = await EnterpriseService.getEnterpriseDetails(token, user?.id);
+
+      storage.setItem('softwareId', softwareId);
+      storage.setItem('enterprise', { externalId });
+
+      const payloadLicenseAccess = {
+        token,
+        softwareId,
+        forceUpdate: forceLogin,
+        enterpriseId: externalId,
+        licenseAccessedId: String(user?.id),
+      };
+
+      await LicenseAccessService.addLicenseAccess(payloadLicenseAccess);
 
       storage.setItem('jwtToken', token);
-      storage.setItem('enterprise', enterpriseDetails);
       storage.setItem('userInfo', user);
 
       push('/');
     } catch (err) {
+      console.log(err);
       if (err.response) {
-        const errorMessage = get(
+        const errorLicenseAccess = get(
+          err,
+          ['response', 'data', 'message'],
+          null
+        );
+
+        if (errorLicenseAccess === 'Já existe um acesso ativo para esse usuário.') setForceLogin(true);
+
+        const errorGeneric = get(
           err,
           ['response', 'data', 'error', 'message'],
           'Something went wrong'
         );
+
+        const errorMessage = errorLicenseAccess || errorGeneric;
 
         if (camelCase(errorMessage).toLowerCase() === 'usernotactive') {
           push('/auth/oops');
@@ -151,7 +184,7 @@ const AuthPage = ({ hasAdmin, setHasAdmin }) => {
     try {
       const {
         data: {
-          data: { token, user },
+          data,
         },
       } = await axios({
         method: 'POST',
@@ -159,12 +192,6 @@ const AuthPage = ({ hasAdmin, setHasAdmin }) => {
         data: omit(body, fieldsToOmit),
         cancelToken: source.token,
       });
-
-      const enterpriseDetails = await getEnterpriseDetails(token, user?.id);
-
-      storage.setItem('jwtToken', token);
-      storage.setItem('enterprise', enterpriseDetails);
-      storage.setItem('userInfo', user);
 
       if (
         (authType === 'register' && body.userInfo.news === true) ||
@@ -199,7 +226,7 @@ const AuthPage = ({ hasAdmin, setHasAdmin }) => {
     try {
       const {
         data: {
-          data: { token, user },
+          data
         },
       } = await axios({
         method: 'POST',
@@ -208,22 +235,20 @@ const AuthPage = ({ hasAdmin, setHasAdmin }) => {
         cancelToken: source.token,
       });
 
-      const enterpriseDetails = await getEnterpriseDetails(token, user?.id);
-
-      storage.setItem('jwtToken', token);
-      storage.setItem('enterprise', enterpriseDetails);
-      storage.setItem('userInfo', user);
-
       push('/');
     } catch (err) {
       if (err.response) {
-        const errorMessage = get(err, ['response', 'data', 'message'], 'Something went wrong');
-        const errorStatus = get(err, ['response', 'data', 'statusCode'], 400);
+        const errorLicenseAccess = get(err, ['response', 'data', 'message'], null);
+
+        if (errorLicenseAccess) setForceLogin(true);
+
+        const errorGeneric = get(err, ['response', 'data', 'message'], 'Something went wrong');
+
+        const errorMessage = errorLicenseAccess || errorGeneric;
 
         dispatch({
           type: 'SET_REQUEST_ERROR',
           errorMessage,
-          errorStatus,
         });
         setErrors({ errorMessage });
       }
@@ -231,48 +256,6 @@ const AuthPage = ({ hasAdmin, setHasAdmin }) => {
       setSubmitting(false);
     }
   };
-
-  const getEnterpriseDetails = async (token, userId) => {
-    const BASE_URL = (CUSTOM_VARIABLES.NODE_ENV === 'production')
-      ? 'https://kaizenlog.dailykaizenconsultoria.com.br/content-manager/collection-types'
-      : 'https://kaizen-house-hml.enesolucoes.com.br/content-manager/collection-types';
-
-    const enterpriseDetails = {
-      id: null,
-      externalId: null
-    };
-
-    const responseEnterpriseUser = await axios.get(
-      `${BASE_URL}/api::usuario-empresa.usuario-empresa?filters[$and][0][id_usuario][$eq]=${userId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json; charset=utf-8',
-        }
-      }
-    );
-
-    const enterpriseUserDetais = get(responseEnterpriseUser, ['data', 'results', '0']);
-
-    if(size(enterpriseUserDetais)) {
-      const enterpriseDetailsResponse = await axios.get(
-        `${BASE_URL}/api::empresa.empresa?filters[$and][0][id_login][$eq]=${enterpriseUserDetais.id_empresa}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json; charset=utf-8',
-          }
-        }
-      );
-
-      const enterprise = get(enterpriseDetailsResponse, ['data', 'results', '0']);
-
-      enterpriseDetails.id = enterprise?.id;
-      enterpriseDetails.externalId = enterprise?.id_login;
-    }
-
-    return enterpriseDetails;
-  }
 
   // Redirect the user to the login page if
   // the endpoint does not exist or
@@ -298,6 +281,7 @@ const AuthPage = ({ hasAdmin, setHasAdmin }) => {
       onSubmit={handleSubmit}
       requestError={requestError}
       schema={schema}
+      forceLogin={forceLogin}
     />
   );
 };
