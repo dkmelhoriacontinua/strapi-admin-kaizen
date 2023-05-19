@@ -64,7 +64,7 @@ const ModalLayoutStyled = styled(ModalLayout)`
     }
 `;
 
-const ModalForm = ({ queryName, onToggle }) => {
+const ModalForm = ({ queryName, onToggle, handleFindAllUsers }) => {
   const [currentStep, setStep] = useState('create');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [permission, setPermission] = useState();
@@ -167,6 +167,8 @@ const ModalForm = ({ queryName, onToggle }) => {
 
     try {
       body.roles = [1];
+      body.email = String(body?.email).toLowerCase();
+
       await postMutation.mutateAsync(body);
     } catch (err) {
       unlockApp();
@@ -181,7 +183,7 @@ const ModalForm = ({ queryName, onToggle }) => {
     if (next) {
       setStep(next);
     } else {
-      onToggle();
+      handleClose();
     }
   };
 
@@ -192,7 +194,7 @@ const ModalForm = ({ queryName, onToggle }) => {
         {formatMessage(buttonSubmitLabel)}
       </Button>
     ) : (
-      <Button type="button" loading={isSubmitting} onClick={onToggle}>
+      <Button type="button" loading={isSubmitting} onClick={handleClose}>
         {formatMessage(buttonSubmitLabel)}
       </Button>
     );
@@ -209,8 +211,13 @@ const ModalForm = ({ queryName, onToggle }) => {
     permissionMaster = listPermissions?.data.find(item => item.Nome.toLowerCase() === 'masterdk');
   }
 
+  const handleClose = async () => {
+    onToggle();
+    await handleFindAllUsers();
+  }
+
   return (
-    <ModalLayoutStyled onClose={onToggle} labelledBy="title">
+    <ModalLayoutStyled onClose={handleClose} labelledBy="title">
       <ModalHeader>
         <Breadcrumbs label={headerTitle}>
           <Crumb>{headerTitle}</Crumb>
@@ -240,6 +247,10 @@ const ModalForm = ({ queryName, onToggle }) => {
                         <Grid gap={5}>
                           {layout.map(row => {
                             return row.map(input => {
+                              const formatValue = input?.name === 'email'
+                                ? String(values[input.name]).toLowerCase()
+                                : values[input.name];
+
                               return (
                                 <GridItem key={input.name} {...input.size}>
                                   <GenericInput
@@ -247,7 +258,7 @@ const ModalForm = ({ queryName, onToggle }) => {
                                     disabled={isDisabled}
                                     error={errors[input.name]}
                                     onChange={handleChange}
-                                    value={values[input.name]}
+                                    value={formatValue}
                                   />
                                 </GridItem>
                               );
@@ -387,7 +398,7 @@ const ModalForm = ({ queryName, onToggle }) => {
               </ModalBody>
               <ModalFooter
                 startActions={
-                  <Button variant="tertiary" onClick={onToggle} type="button">
+                  <Button variant="tertiary" onClick={handleClose} type="button">
                     {formatMessage({
                       id: 'app.components.Button.cancel',
                       defaultMessage: 'Cancel',

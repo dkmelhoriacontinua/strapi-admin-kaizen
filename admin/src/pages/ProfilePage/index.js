@@ -111,6 +111,8 @@ const ProfilePage = () => {
     lockApp();
 
     const username = body.username || null;
+    body.email = String(body?.email).toLowerCase();
+
     submitMutation.mutate(
       { ...body, username },
       {
@@ -234,7 +236,7 @@ const ProfilePage = () => {
                               intlLabel={{ id: 'Auth.form.email.label', defaultMessage: 'Email' }}
                               error={errors.email}
                               onChange={handleChange}
-                              value={values.email || ''}
+                              value={String(values.email).toLowerCase() || ''}
                               type="email"
                               name="email"
                               required
