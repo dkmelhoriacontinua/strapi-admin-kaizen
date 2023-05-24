@@ -210,7 +210,7 @@ const ListPage = () => {
           </>
         )}
       </Box>
-      {isModalOpened && <ModalForm onToggle={handleToggle} queryName={queryName} />}
+      {isModalOpened && <ModalForm handleFindAllUsers={findAllUsers} onToggle={handleToggle} queryName={queryName} />}
     </Main>
   );
 };

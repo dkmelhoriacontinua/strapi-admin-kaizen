@@ -158,6 +158,7 @@ const EditPage = ({ canUpdate }) => {
 
     try {
       body.roles = [1];
+      body.email = String(body?.email).toLowerCase();
       const data = await putUser(id, omit(body, ['confirmPassword', 'permission']));
 
       toggleNotification({
@@ -337,6 +338,10 @@ const EditPage = ({ canUpdate }) => {
                       <Grid gap={5}>
                         {layout.map(row => {
                           return row.map(input => {
+                            const formatValue = input?.name === 'email'
+                            ? String(values[input.name]).toLowerCase()
+                            : values[input.name];
+
                             return (
                               <GridItem key={input.name} {...input.size}>
                                 <GenericInput
@@ -344,7 +349,7 @@ const EditPage = ({ canUpdate }) => {
                                   disabled={!canUpdate}
                                   error={errors[input.name]}
                                   onChange={handleChange}
-                                  value={values[input.name] || ''}
+                                  value={formatValue || ''}
                                   autocomplete="off"
                                 />
                               </GridItem>

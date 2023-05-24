@@ -163,7 +163,7 @@ const Register = ({ fieldsToDisable, noSignin, onSubmit, schema }) => {
                   <TextInput
                     name="email"
                     disabled={fieldsToDisable.includes('email')}
-                    value={values.email}
+                    value={String(values.email).toLowerCase()}
                     onChange={handleChange}
                     error={
                       errors.email
